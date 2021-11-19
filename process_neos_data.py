@@ -68,6 +68,7 @@ class NeosPoseData(): #Single-person pose data
             self.data_iter = iter(self.fileContent)
         self.data = {}
         self.num_frames = 0
+        self.load_data()
 
     def process_heading_bytes(self):
         body_node_data = {}
@@ -114,6 +115,7 @@ class NeosPoseData(): #Single-person pose data
             bs+=b
             if version_number < 1000:
                 nodeInt = oldToNewNodeInts[nodeInt]
+            nodeInt = str(nodeInt)
             body_node_data[nodeInt] = {}
             body_node_list.append(nodeInt)
             print(nodeInt)
@@ -167,7 +169,7 @@ class NeosPoseData(): #Single-person pose data
         bs=bytes()
         deltaT,b = read_float(data_iter)
         self.data["deltaTs"].append(deltaT)
-        print(deltaT)
+        # print(deltaT)
         if deltaT is None:
             # break
             return None
@@ -208,7 +210,7 @@ class NeosPoseData(): #Single-person pose data
                 bodyNode["rot_stream"] += [rot]
         #READ finger poses
         if self.data["hands_are_tracked"]:
-            print("HI")
+            # print("HI")
             #Left hand
             left_hand_rots = []
             for i in range(23):
@@ -305,6 +307,34 @@ class NeosPoseData(): #Single-person pose data
         if "num_frames" in self.data:
             self.num_frames = self.data["num_frames"]
 
+    def load_heading_json(self, fileName):
+        data = self.data
+        new_data = json.load(open(fileName, "r"))
+        for node in new_data["body_node_list"]:
+            print(node)
+            assert str(node) in data["body_node_data"]
+        del new_data["body_node_data"]
+        # del new_data["hands_are_tracked"]
+        del new_data["left_hand_rots"]
+        del new_data["right_hand_rots"]
+        del new_data["num_frames"]
+        data.update(new_data)
+        self.data = data
+
+    def load_frames_json(self, fileName):
+        data = self.data
+        new_data = json.load(open(fileName, "r"))
+        for node in data["body_node_list"]:
+            assert str(node) in new_data["body_node_data"]
+        data["body_node_data"] = new_data["body_node_data"]
+        data["hands_are_tracked"] = new_data["hands_are_tracked"]
+        data["left_hand_rots"] = new_data["left_hand_rots"]
+        data["right_hand_rots"] = new_data["right_hand_rots"]
+        data["num_frames"] = new_data["num_frames"]
+        self.data = data
+        if "num_frames" in self.data:
+            self.num_frames = self.data["num_frames"]
+
     def concat_numpy(self):
         arrays = []
         data = self.data
@@ -370,7 +400,7 @@ class NeosPoseData(): #Single-person pose data
         #READ deltaT
         bs=bytes()
         deltaT = self.data["deltaTs"][frame_index]
-        print(deltaT)
+        # print(deltaT)
         if deltaT is None:
             # break
             return None
@@ -410,7 +440,7 @@ class NeosPoseData(): #Single-person pose data
                 bs+=b
         #READ finger poses
         if self.data["hands_are_tracked"]:
-            print("HI")
+            # print("HI")
             #Left hand
             left_hand_rots = bodyNode["left_hand_rots"][frame_index]
             for i in range(23):
@@ -494,15 +524,28 @@ class NeosPoseData(): #Single-person pose data
         bs+=b
         return bs
 
+def get_features(fileName, suffix=""):
+    seq_id = "_".join(fileName.split("/"))
+    npd = NeosPoseData(fileName)
+    npd.load_heading_json("data/basic_config.json")
+    a = npd.concat_numpy()
+    np.save("data/numpys/"+seq_id+suffix, a)
 
 if __name__ == '__main__':
-    npd = NeosPoseData("data/example/1/ID2C00_streams.dat")
 
-    npd.load_data()
+    session_folder = "data/U_dekatron_R_00ee7d25_447d_4a2e_9d72_07c055ac4d40/S-d03a6c7b-1767-4582-8ffc-9277d5f5d4b5_4f45c65b-8524-4c2e-849d-e3c2cf17bd48"
+    for i in range(2):
+        get_features(session_folder+"/"+str(i+1)+"/"+"ID1E66900_streams.dat", suffix=".person1")
+        get_features(session_folder+"/"+str(i+1)+"/"+"ID2C00_streams.dat", suffix=".person2")
+        get_features(session_folder+"/"+str(i+1)+"/"+"ID1E66900_streams.dat", suffix=".person2")
+        get_features(session_folder+"/"+str(i+1)+"/"+"ID2C00_streams.dat", suffix=".person1")
+    # npd = NeosPoseData("data/example/1/ID2C00_streams.dat")
 
-    npd.data["hands_are_tracked"] = False
-    a = npd.concat_numpy()
-    np.save("data/example_numpy_frames", a)
-
-    npd.clear_trajectories()
-    npd.save_json("data/basic_config.json")
+    # npd.load_data()
+    #
+    # npd.data["hands_are_tracked"] = False
+    # a = npd.concat_numpy()
+    # np.save("data/example_numpy_frames", a)
+    #
+    # npd.clear_trajectories()
+    # npd.save_json("data/basic_config.json")
