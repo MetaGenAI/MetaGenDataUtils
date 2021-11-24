@@ -62,13 +62,14 @@ class NeosPoseData(): #Single-person pose data
     # fileName = "data/example/1/ID2C00_streams.dat"
         if data_iter is not None:
             self.data_iter = data_iter
+            self.load_data()
         elif fileName is not None:
             self.file = open(fileName, mode='rb')
             self.fileContent = self.file.read()
             self.data_iter = iter(self.fileContent)
+            self.load_data()
         self.data = {}
         self.num_frames = 0
-        self.load_data()
 
     def process_heading_bytes(self):
         body_node_data = {}
@@ -409,6 +410,7 @@ class NeosPoseData(): #Single-person pose data
         #READ bodyNode transforms
         body_node_list=self.data["body_node_list"]
         body_node_data=self.data["body_node_data"]
+        print(body_node_data)
         for key in body_node_list:
             bodyNode = body_node_data[str(key)]
             # print(bodyNode)
@@ -501,7 +503,7 @@ class NeosPoseData(): #Single-person pose data
             nodeInt = self.data["body_node_list"][i]
             # print(self.data["body_node_data"])
             print(nodeInt)
-            b = int_to_bytes(nodeInt)
+            b = int_to_bytes(int(nodeInt))
             bs+=b
             nodeInt = str(nodeInt)
             #READ if scale stream exists

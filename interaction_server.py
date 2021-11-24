@@ -14,7 +14,10 @@ class PoseInteractionServicer(pose_interaction_pb2_grpc.PoseInteractionServicer)
         self.npd = NeosPoseData()
         self.npd.load_json("data/basic_config.json")
         #example numpy frames for single person. When running interactively with Transflower, this would be obtained via websockets from transflower
-        self.frames = np.load("data/example_numpy_frames.npy")
+        self.frames = np.load("data/data_U_dekatron_R_00ee7d25_447d_4a2e_9d72_07c055ac4d40_S_d03a6c7b.npy")
+        self.frames = self.frames[:,0,:self.frames.shape[2]//2]
+        # self.frames = np.load("data/example_numpy_frames.npy")
+        print(self.frames.shape)
         self.index = 0
     def SendHeadingBytes(self, request, context):
         return EmptyMessage()
@@ -30,8 +33,8 @@ class PoseInteractionServicer(pose_interaction_pb2_grpc.PoseInteractionServicer)
     def SendFrameBytes(self, request, context):
         return EmptyMessage()
     def GetFrameBytes(self, request, context):
-        print("GetFrameBytes")
-        print(request.ref_id)
+        # print("GetFrameBytes")
+        # print(request.ref_id)
         self.npd.append_concat_frame(self.frames[self.index:self.index+1])
         bs = self.npd.get_frame_bytes(self.index)
         self.index += 1
