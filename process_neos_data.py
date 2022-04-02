@@ -358,10 +358,13 @@ class NeosPoseData(): #Single-person pose data
             if d["scale_exists"]:
                 arrays.append(d["scale_stream"])
             if d["pos_exists"]:
-                arrays.append(d["pos_stream"])
+                # arrays.append(d["pos_stream"])
                 if node in ["1","10"] and relative:
+                    arrays.append(d["pos_stream_y"])
                     print(d["deltas_rel"].shape)
                     arrays.append(d["deltas_rel"])
+                else:
+                    arrays.append(d["pos_stream"])
             if d["rot_exists"]:
                 arrays.append(d["rot_stream"])
                 if node in ["1","10"] and relative:
@@ -975,7 +978,7 @@ class NeosPoseData(): #Single-person pose data
                     thetas_diff = bodyNode["thetas_diff"][indices,:]
                     if only_last_frame:
                         if "thetas" in bodyNode:
-                            thetas = bodyNode["thetas"] + thetas_diff
+                            thetas = bodyNode["thetas"] + thetas_diff #TODO: i think i could make this bodyNode["thetas"][indices,:]
                         else:
                             thetas = thetas_diff
                         bodyNode["thetas"] = thetas
@@ -1054,9 +1057,7 @@ def get_features(fileName, save_folder, suffixes=""):
     npd.load_heading_json("data/basic_config.json")
     print("Fixing root big rescaling")
     npd.fix_root_big_rescalings()
-    npd.make_relative()
-    # npd.make_absolute()
-    # npd.fix_rot_discontinuities()
+    # npd.make_relative()
     npd.convert_quaternions_to_axis_angles()
     # print("Fixing rot discontinuities")
     npd.fix_rot_discontinuities()
@@ -1067,13 +1068,18 @@ def get_features(fileName, save_folder, suffixes=""):
 
 if __name__ == '__main__':
 
-    root_folder = "data/kulzaworld_guille_neosdata"
+    # root_folder = "data/U_dekatron_R_00ee7d25_447d_4a2e_9d72_07c055ac4d40/S-d03a6c7b-1767-4582-8ffc-9277d5f5d4b5_4f45c65b-8524-4c2e-849d-e3c2cf17bd48"
+    # root_folder = "data/U_dekatron_R_00ee7d25_447d_4a2e_9d72_07c055ac4d40"
+    # root_folder = "data/kulzaworld_guille_neosdata"
+    root_folder = "data/quantum_bar_neosdata1"
     # root_folder = "data/kulzaworld_guille_neosdata_smol"
     # save_folder = "data/kulzaworld_guille_neosdata_npy"
+    # save_folder = "data/kulzaworld_guille_neosdata_npy_axis_angle"
     # save_folder = "data/kulzaworld_guille_neosdata_npy_relative"
-    save_folder = "data/kulzaworld_guille_neosdata_npy_testing"
+    save_folder = "data/quantum_bar_neosdata1_npy_relative"
+    # save_folder = "data/dekaworld_alex_guille_neosdata_npy_relative"
+    # save_folder = "data/kulzaworld_guille_neosdata_npy_testing"
     # save_folder = "data/kulzaworld_guille_neosdata_smol_npy_axis_angle"
-    # root_folder = "data/U_dekatron_R_00ee7d25_447d_4a2e_9d72_07c055ac4d40/S-d03a6c7b-1767-4582-8ffc-9277d5f5d4b5_4f45c65b-8524-4c2e-849d-e3c2cf17bd48"
     # save_folder = "data/dekaworld_alex_guille_neosdata3"
     if not os.path.isdir(save_folder):
         os.mkdir(save_folder)
@@ -1082,8 +1088,9 @@ if __name__ == '__main__':
             fname = os.path.join(dirpath,filename)
             if fname.endswith('.dat') and not fname.endswith('mouth_streams.dat'):
                 print(fname)
+                get_features(fname, save_folder=save_folder, suffixes=[".person1"])
                 # get_features(fname, save_folder=save_folder, suffixes=[".person1", ".person2"])
-                get_features(fname, save_folder=save_folder, suffixes=[".person1.rel", ".person2.rel"])
+                # get_features(fname, save_folder=save_folder, suffixes=[".person1.rel", ".person2.rel"])
     # npd = NeosPoseData("data/example/1/ID2C00_streams.dat")
 
     # npd.load_data()
